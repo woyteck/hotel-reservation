@@ -35,9 +35,11 @@ func main() {
 	app := fiber.New(config)
 
 	apiv1 := app.Group("/api/v1")
-	apiv1.Post("/users", userHandler.HandlePostUser)
 	apiv1.Get("/users", userHandler.HandleGetUsers)
 	apiv1.Get("/users/:id", userHandler.HandleGetUser)
+	apiv1.Post("/users", userHandler.HandlePostUser)
+	apiv1.Put("/users/:id", userHandler.HandlePutUser)
+	apiv1.Delete("/users/:id", userHandler.HandleDeleteUser)
 
 	log.Fatal(app.Listen(*listernAddr))
 }
