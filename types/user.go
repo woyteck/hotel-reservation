@@ -16,6 +16,14 @@ const (
 	minPasswordLen  = 7
 )
 
+type User struct {
+	ID                primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	FirstName         string             `bson:"firstName" json:"firstName"`
+	LastName          string             `bson:"lastName" json:"lastName"`
+	Email             string             `bson:"email" json:"email"`
+	EncryptedPassword string             `bson:"encryptedPassword" json:"-"`
+}
+
 type UpdateUserParams struct {
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
@@ -62,14 +70,6 @@ func isEmailValid(e string) bool {
 	emailRegex := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 
 	return emailRegex.MatchString(e)
-}
-
-type User struct {
-	ID                primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	FirstName         string             `bson:"firstName" json:"firstName"`
-	LastName          string             `bson:"lastName" json:"lastName"`
-	Email             string             `bson:"email" json:"email"`
-	EncryptedPassword string             `bson:"encryptedPassword" json:"-"`
 }
 
 func NewUserFromParams(params CreateUserParams) (*User, error) {
