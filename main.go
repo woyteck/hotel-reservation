@@ -52,6 +52,7 @@ func main() {
 
 	//hotel
 	apiv1.Get("/hotels", hotelHandler.HandleGetHotels)
+	apiv1.Get("/hotels/:id", hotelHandler.HandleGetHotel)
 	apiv1.Get("/hotels/:id/rooms", hotelHandler.HandleGetRooms)
 
 	log.Fatal(app.Listen(*listernAddr))
