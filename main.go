@@ -40,33 +40,42 @@ func main() {
 			User:    userStore,
 			Booking: bookingStore,
 		}
-		userHandler  = api.NewUserHandler(userStore)
-		hotelHandler = api.NewHotelHandler(store)
-		roomHandler  = api.NewRoomHandler(store)
-		authHandler  = api.NewAuthHandler(userStore)
-		app          = fiber.New(config)
-		auth         = app.Group("/api")
-		apiv1        = app.Group("/api/v1", middleware.JWTAuthentication(userStore))
+		userHandler    = api.NewUserHandler(userStore)
+		hotelHandler   = api.NewHotelHandler(store)
+		roomHandler    = api.NewRoomHandler(store)
+		authHandler    = api.NewAuthHandler(userStore)
+		bookingHandler = api.NewBookingHandler(store)
+		app            = fiber.New(config)
+		auth           = app.Group("/api")
+		apiv1          = app.Group("/api/v1", middleware.JWTAuthentication(userStore))
+		admin          = apiv1.Group("/admin", middleware.AdminAuth)
 	)
 
 	//auth
 	auth.Post("/auth", authHandler.HandleAuthenticate)
 
-	//user
+	//user handlers
 	apiv1.Get("/users", userHandler.HandleGetUsers)
 	apiv1.Get("/users/:id", userHandler.HandleGetUser)
 	apiv1.Post("/users", userHandler.HandlePostUser)
 	apiv1.Put("/users/:id", userHandler.HandlePutUser)
 	apiv1.Delete("/users/:id", userHandler.HandleDeleteUser)
 
-	//hotel
+	//hotel handlers
 	apiv1.Get("/hotels", hotelHandler.HandleGetHotels)
 	apiv1.Get("/hotels/:id", hotelHandler.HandleGetHotel)
 	apiv1.Get("/hotels/:id/rooms", hotelHandler.HandleGetRooms)
 
-	//booking
+	//room handlers
 	apiv1.Get("/rooms", roomHandler.HandleGetRooms)
 	apiv1.Post("/rooms/:id/book", roomHandler.HandleBookRoom)
+	//TODO: cancel a booking
+
+	//booking handlers
+	apiv1.Get("/bookings/:id", bookingHandler.HandleGetBooking)
+
+	//admin handlers
+	admin.Get("/bookings", bookingHandler.HandleGetBookings)
 
 	log.Fatal(app.Listen(*listernAddr))
 }
