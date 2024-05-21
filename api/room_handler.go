@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"hotel-reservation/db"
 	"hotel-reservation/types"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -15,6 +17,19 @@ type BookRoomParams struct {
 	FromDate   time.Time `json:"fromDate"`
 	TillDate   time.Time `json:"tillDate"`
 	NumPersons int       `json:"numPersons"`
+}
+
+func (p BookRoomParams) validate() error {
+	now := time.Now()
+	if now.After(p.FromDate) || now.After(p.TillDate) {
+		return fmt.Errorf("cannot book a room in the past")
+	}
+
+	if p.FromDate.After(p.TillDate) {
+		return fmt.Errorf("tillDate cannot be before fromDate")
+	}
+
+	return nil
 }
 
 type RoomHandler struct {
@@ -33,6 +48,10 @@ func (h *RoomHandler) HandleBookRoom(c *fiber.Ctx) error {
 		return err
 	}
 
+	if err := params.validate(); err != nil {
+		return err
+	}
+
 	roomID, err := primitive.ObjectIDFromHex(c.Params("id"))
 	if err != nil {
 		return err
@@ -46,6 +65,18 @@ func (h *RoomHandler) HandleBookRoom(c *fiber.Ctx) error {
 		})
 	}
 
+	ok, err = h.isRoomAvailableForBooking(c.Context(), roomID, params)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return c.Status(http.StatusBadRequest).JSON(genericResponse{
+			Type: "error",
+			Msg:  fmt.Sprintf("room %s already booked", c.Params("id")),
+		})
+	}
+
 	booking := types.Booking{
 		RoomID:     roomID,
 		UserID:     user.ID,
@@ -54,7 +85,30 @@ func (h *RoomHandler) HandleBookRoom(c *fiber.Ctx) error {
 		NumPersons: params.NumPersons,
 	}
 
-	fmt.Printf("%+v\n", booking)
+	inserted, err := h.store.Booking.InsertBooking(c.Context(), &booking)
+	if err != nil {
+		return err
+	}
 
-	return nil
+	return c.JSON(inserted)
+}
+
+func (h *RoomHandler) isRoomAvailableForBooking(ctx context.Context, roomID primitive.ObjectID, params BookRoomParams) (bool, error) {
+	where := bson.M{
+		"roomID": roomID,
+		"fromDate": bson.M{
+			"$gte": params.FromDate,
+		},
+		"tillDate": bson.M{
+			"$lte": params.TillDate,
+		},
+	}
+	bookings, err := h.store.Booking.GetBookings(ctx, where)
+	if err != nil {
+		return false, err
+	}
+
+	ok := len(bookings) == 0
+
+	return ok, nil
 }
