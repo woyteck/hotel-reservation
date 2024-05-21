@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"hotel-reservation/api"
 	"hotel-reservation/db"
 	"hotel-reservation/types"
 	"log"
@@ -59,6 +61,8 @@ func seedUser(firstName, lastName, email, password string, isAdmin bool) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Printf("%s -> %s\n", user.Email, api.CreateTokenFromUser(user))
 }
 
 func seedHotel(name string, location string, rating int) {
