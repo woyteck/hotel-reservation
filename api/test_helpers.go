@@ -10,10 +10,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const testdburi = "mongodb://root:example@localhost:27017"
+const (
+	testdburi  = "mongodb://root:example@localhost:27017"
+	testDBName = "hotel-reservation-test"
+)
 
 type testdb struct {
-	db.UserStore
+	client *mongo.Client
+	*db.Store
 }
 
 func setup(t *testing.T) *testdb {
@@ -22,13 +26,21 @@ func setup(t *testing.T) *testdb {
 		log.Fatal(err)
 	}
 
+	hotelStore := db.NewMongoHotelStore(client)
+
 	return &testdb{
-		UserStore: db.NewMongoUserStore(client),
+		client: client,
+		Store: &db.Store{
+			Hotel:   hotelStore,
+			User:    db.NewMongoUserStore(client),
+			Room:    db.NewMongoRoomStore(client, hotelStore),
+			Booking: db.NewMongoBookingStore(client),
+		},
 	}
 }
 
 func (tdb *testdb) teardown(t *testing.T) {
-	if err := tdb.UserStore.Drop(context.TODO()); err != nil {
+	if err := tdb.client.Database(db.DBNAME).Drop(context.TODO()); err != nil {
 		t.Fatal(err)
 	}
 }
