@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"hotel-reservation/api/middleware"
 	"hotel-reservation/db/fixtures"
 	"hotel-reservation/types"
 	"net/http"
@@ -26,7 +25,7 @@ func TestUserGetBooking(t *testing.T) {
 		from           = time.Now()
 		till           = from.AddDate(0, 0, 5)
 		app            = fiber.New()
-		route          = app.Group("/", middleware.JWTAuthentication(tdb.User))
+		route          = app.Group("/", JWTAuthentication(tdb.User))
 		bookingHandler = NewBookingHandler(tdb.Store)
 		booking        = fixtures.AddBooking(tdb.Store, user.ID, room.ID, from, till, 2)
 	)
@@ -79,8 +78,8 @@ func TestAdminGetBookings(t *testing.T) {
 		room           = fixtures.AddRoom(tdb.Store, "small", true, 4.4, hotel.ID)
 		from           = time.Now()
 		till           = from.AddDate(0, 0, 5)
-		app            = fiber.New()
-		admin          = app.Group("/", middleware.JWTAuthentication(tdb.User), middleware.AdminAuth)
+		app            = fiber.New(fiber.Config{ErrorHandler: ErrorHandler})
+		admin          = app.Group("/", JWTAuthentication(tdb.User), AdminAuth)
 		bookingHandler = NewBookingHandler(tdb.Store)
 		booking        = fixtures.AddBooking(tdb.Store, user.ID, room.ID, from, till, 2)
 	)
@@ -123,7 +122,7 @@ func TestAdminGetBookings(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if resp.StatusCode == http.StatusOK {
-		t.Fatalf("expected non 200 response got %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected status unauthorized response got %d", resp.StatusCode)
 	}
 }

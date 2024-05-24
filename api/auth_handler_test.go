@@ -63,7 +63,7 @@ func TestAuthenticateWithWrongPassword(t *testing.T) {
 
 	fixtures.AddUser(tdb.Store, "james", "foo", false)
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{ErrorHandler: ErrorHandler})
 	authHandler := NewAuthHandler(tdb.User)
 	app.Post("/auth", authHandler.HandleAuthenticate)
 
