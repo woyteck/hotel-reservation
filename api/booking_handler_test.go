@@ -18,13 +18,15 @@ func TestUserGetBooking(t *testing.T) {
 	defer tdb.teardown(t)
 
 	var (
-		nonAuthUser    = fixtures.AddUser(tdb.Store, "Jimmy", "Watercooler", false)
-		user           = fixtures.AddUser(tdb.Store, "james", "foo", false)
-		hotel          = fixtures.AddHotel(tdb.Store, "bar hotel", "a", 4, nil)
-		room           = fixtures.AddRoom(tdb.Store, "small", true, 4.4, hotel.ID)
-		from           = time.Now()
-		till           = from.AddDate(0, 0, 5)
-		app            = fiber.New()
+		nonAuthUser = fixtures.AddUser(tdb.Store, "Jimmy", "Watercooler", false)
+		user        = fixtures.AddUser(tdb.Store, "james", "foo", false)
+		hotel       = fixtures.AddHotel(tdb.Store, "bar hotel", "a", 4, nil)
+		room        = fixtures.AddRoom(tdb.Store, "small", true, 4.4, hotel.ID)
+		from        = time.Now()
+		till        = from.AddDate(0, 0, 5)
+		app         = fiber.New(fiber.Config{
+			ErrorHandler: ErrorHandler,
+		})
 		route          = app.Group("/", JWTAuthentication(tdb.User))
 		bookingHandler = NewBookingHandler(tdb.Store)
 		booking        = fixtures.AddBooking(tdb.Store, user.ID, room.ID, from, till, 2)
