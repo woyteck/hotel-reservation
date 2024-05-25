@@ -12,3 +12,5 @@ type Store struct {
 	Room    RoomStore
 	Booking BookingStore
 }
+
+type Map map[string]any
