@@ -12,6 +12,11 @@ type HotelHandler struct {
 	store *db.Store
 }
 
+type HotelQueryParams struct {
+	db.Pagination
+	Rating int
+}
+
 func NewHotelHandler(store *db.Store) *HotelHandler {
 	return &HotelHandler{
 		store: store,
@@ -35,12 +40,16 @@ func (h *HotelHandler) HandleGetRooms(c *fiber.Ctx) error {
 }
 
 func (h *HotelHandler) HandleGetHotels(c *fiber.Ctx) error {
-	var pagination db.Pagination
-	if err := c.QueryParser(&pagination); err != nil {
+	var params HotelQueryParams
+	if err := c.QueryParser(&params); err != nil {
 		return BadRequest()
 	}
 
-	hotels, err := h.store.Hotel.GetHotels(c.Context(), nil, &pagination)
+	filter := db.Map{
+		"rating": params.Rating,
+	}
+
+	hotels, err := h.store.Hotel.GetHotels(c.Context(), filter, &params.Pagination)
 	if err != nil {
 		return ErrResourceNotFound("hotel")
 	}
@@ -48,7 +57,7 @@ func (h *HotelHandler) HandleGetHotels(c *fiber.Ctx) error {
 	resp := db.ResourceResponse{
 		Data:    hotels,
 		Results: len(hotels),
-		Page:    int(pagination.Page),
+		Page:    int(params.Pagination.Page),
 	}
 
 	return c.JSON(resp)
