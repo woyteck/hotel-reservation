@@ -14,3 +14,8 @@ type Store struct {
 }
 
 type Map map[string]any
+
+type Pagination struct {
+	Limit int64
+	Page  int64
+}
